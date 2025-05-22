@@ -1,59 +1,40 @@
 package ru.yandex.practicum.catsgram.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.catsgram.controller.exception.ConditionsNotMetException;
-import ru.yandex.practicum.catsgram.controller.exception.DuplicatedDataException;
 import ru.yandex.practicum.catsgram.model.User;
+import ru.yandex.practicum.catsgram.service.UserService;
 
-import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    private final UserService userService;
 
-    private final HashMap<Long, User> users = new HashMap<>();
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     public Collection<User> getUsers() {
-        return users.values();
+        return userService.getUsers();
+    }
+
+    @GetMapping("/{id}")
+    public Optional<User> getUser(@PathVariable Long id) {
+        return userService.findUserById(id);
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new ConditionsNotMetException("Имейл должен быть указан");
-        }
-        if (users.values().stream().anyMatch(otherUser -> otherUser.getEmail().equals(user.getEmail()))) {
-            throw new DuplicatedDataException("Этот имейл уже используется");
-        }
-        user.setId(getNextId());
-        user.setRegistrationDate(Instant.now());
-        users.put(user.getId(), user);
-
-        return user;
+        return userService.createUser(user);
     }
 
     @PutMapping
     public User updateUser(@RequestBody User user) {
-        if (user.getId() == null) {
-            throw new ConditionsNotMetException("Id должен быть указан");
-        }
-        if (users.values().stream().anyMatch(otherUser -> otherUser != user && otherUser.getEmail().equals(user.getEmail()))) {
-            throw new DuplicatedDataException("Этот имейл уже используется");
-        }
-        users.put(user.getId(), user);
-
-        return user;
-    }
-
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+        return userService.updateUser(user);
     }
 }

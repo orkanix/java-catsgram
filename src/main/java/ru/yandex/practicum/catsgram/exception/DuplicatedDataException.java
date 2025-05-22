@@ -1,4 +1,4 @@
-package ru.yandex.practicum.catsgram.controller.exception;
+package ru.yandex.practicum.catsgram.exception;
 
 public class DuplicatedDataException extends RuntimeException {
     public DuplicatedDataException(String message) {
